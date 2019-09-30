@@ -1387,10 +1387,7 @@ static inline void ov5640_power_down(struct ov5640 *sensor, int enable)
 	if (sensor->pwn_gpio < 0)
 		return;
 
-	if (!enable)
-		gpio_set_value_cansleep(sensor->pwn_gpio, 0);
-	else
-		gpio_set_value_cansleep(sensor->pwn_gpio, 1);
+	gpio_set_value_cansleep(sensor->pwn_gpio, enable ? 1 : 0);
 
 	msleep(2);
 }
