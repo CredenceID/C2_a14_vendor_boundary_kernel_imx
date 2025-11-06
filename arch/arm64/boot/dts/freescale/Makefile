@@ -430,6 +430,8 @@ dtb-$(CONFIG_ARCH_MXC) += imx8mm-evk-iw612.dtb
 dtb-$(CONFIG_ARCH_MXC) += imx8ulp-nitrogen-som.dtb \
 			  imx8ulp-tag.dtb \
 
+dtb-$(CONFIG_ARCH_MXC) += imx8mm-c2.dtb \
+
 dtb-$(CONFIG_ARCH_MXC) += imx8mq-nitrogen8m.dtb imx8mq-nitrogen8m-m4.dtb \
 			  imx8mq-nitrogen8m-edp.dtb \
 			  imx8mq-nitrogen8m_som.dtb imx8mq-nitrogen8m_som-m4.dtb \
