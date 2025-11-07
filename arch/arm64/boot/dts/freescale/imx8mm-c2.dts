@@ -30,6 +30,10 @@
 			MX8MMN(IOMUXC_UART3_RXD_GPIO5_IO26, 0x149)
 			/* JS_PIN6 */
 			MX8MMN(IOMUXC_GPIO1_IO14_GPIO1_IO14, 0x149)
+			/* Finger Print */
+#define GP_USBOTG2_EN  <&gpio3 23 GPIO_ACTIVE_HIGH>
+            MX8MMN(IOMUXC_SAI5_RXD2_GPIO3_IO23, 0x09) /* SAI5_RXD2 */
+
 		>;
 	};
 
@@ -225,13 +229,6 @@
 	pinctrl_pwm4: pwm4grp {
 		fsl,pins = <
 			MX8MMN(IOMUXC_SAI3_MCLK_PWM4_OUT, 0x16)
-		>;
-	};
-
-	pinctrl_reg_usbotg2: reg-usbotg2grp {
-		fsl,pins = <
-#define GP_USBOTG2_EN	<&gpio3 23 GPIO_ACTIVE_HIGH>
-			MX8MMN(IOMUXC_SAI5_RXD2_GPIO3_IO23, 0x09)
 		>;
 	};
 
@@ -520,17 +517,6 @@
 			default-state = "off";
 			linux,default-trigger = "transient";
 		};
-	};
-
-	reg_usbotg2: regulator-usbotg2 {
-		compatible = "regulator-fixed";
-		enable-active-high;
-		gpio = GP_USBOTG2_EN;
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_reg_usbotg2>;
-		regulator-name = "usbotg2";
-		regulator-min-microvolt = <5000000>;
-		regulator-max-microvolt = <5000000>;
 	};
 
 	reg_vref_1v8: regulator-vref-1v8 {
@@ -987,7 +973,6 @@
 	dr_mode = "host";
 	disable-over-current;
 	power-active-high;
-	vbus-supply = <&reg_usbotg2>;
 	status = "okay";
 };
 
