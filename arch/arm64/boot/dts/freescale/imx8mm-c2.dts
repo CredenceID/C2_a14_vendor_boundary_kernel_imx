@@ -13,6 +13,13 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_hog>;
 
+	pinctrl_bt_rfkill: bt-rfkillgrp {
+		fsl,pins = <
+#define GP_BT_RFKILL_RESET	<&gpio3 14 GPIO_ACTIVE_LOW>
+			MX8MMN(IOMUXC_NAND_DQS_GPIO3_IO14, 0x119)
+		>;
+	};
+
 	pinctrl_gpio_keys: gpio-keysgrp {
 		fsl,pins = <
 #define GP_GPIOKEY_LEFT		<&gpio5 27 GPIO_ACTIVE_LOW>
@@ -27,9 +34,13 @@
 	pinctrl_hog: hoggrp {
 		fsl,pins = <
 			/* JS_PIN5 */
-			MX8MMN(IOMUXC_UART3_RXD_GPIO5_IO26, 0x149)
+			//MX8MMN(IOMUXC_UART3_RXD_GPIO5_IO26, 0x149)
 			/* JS_PIN6 */
 			MX8MMN(IOMUXC_GPIO1_IO14_GPIO1_IO14, 0x149)
+			
+			/* From imx8mmn-nitrogen8mm_tab.dtsi */
+			//MX8MMN(IOMUXC_SAI2_MCLK_GPIO4_IO27, 0x09)       /* pin 42, BT_UART_WH */
+			
 			/* Finger Print */
 #define GP_USBOTG2_EN  <&gpio3 23 GPIO_ACTIVE_HIGH>
             MX8MMN(IOMUXC_SAI5_RXD2_GPIO3_IO23, 0x09) /* SAI5_RXD2 */
@@ -90,8 +101,9 @@
 		fsl,pins = <
 #define GPIRQ_MAX77818_WCHG_VALID_INT	<&gpio5 0 IRQ_TYPE_LEVEL_LOW>
 			MX8MMN(IOMUXC_SAI3_TXC_GPIO5_IO0, 0x149)
-#define GPIRQ_MAX77818_WCHG_VALID	<&gpio4 31 IRQ_TYPE_LEVEL_LOW>
-			MX8MMN(IOMUXC_SAI3_TXFS_GPIO4_IO31, 0x149)
+/* SAI3_TXFS is used as crypto enable in ident v2 */
+//#define GPIRQ_MAX77818_WCHG_VALID	<&gpio4 31 IRQ_TYPE_LEVEL_LOW>
+//			MX8MMN(IOMUXC_SAI3_TXFS_GPIO4_IO31, 0x149)
 #define GPIRQ_MAX77818_CHG_INT		<&gpio1 5 IRQ_TYPE_LEVEL_LOW>
 			MX8MMN(IOMUXC_GPIO1_IO05_GPIO1_IO5, 0x149)
 		>;
@@ -262,8 +274,6 @@
 			MX8MMN(IOMUXC_ECSPI1_MOSI_UART3_DCE_TX, 0x140)
 			MX8MMN(IOMUXC_ECSPI1_SS0_UART3_DCE_RTS_B, 0x140)
 			MX8MMN(IOMUXC_ECSPI1_MISO_UART3_DCE_CTS_B, 0x140)
-#define GP_BT_ENABLE		<&gpio3 14 GPIO_ACTIVE_HIGH>
-			MX8MMN(IOMUXC_NAND_DQS_GPIO3_IO14, 0x119)
 		>;
 	};
 
@@ -331,6 +341,7 @@
 			MX8MMN(IOMUXC_NAND_DATA07_USDHC3_DATA3, 0x1d0)
 			/* Bluetooth slow clock */
 			MX8MMN(IOMUXC_GPIO1_IO00_ANAMIX_REF_CLK_32K, 0x03)
+			MX8MMN(IOMUXC_GPIO1_IO04_GPIO1_IO4, 0x1c0)  /* bt wake */
 		>;
 	};
 
@@ -342,6 +353,9 @@
 			MX8MMN(IOMUXC_NAND_DATA05_USDHC3_DATA1, 0x1d4)
 			MX8MMN(IOMUXC_NAND_DATA06_USDHC3_DATA2, 0x1d4)
 			MX8MMN(IOMUXC_NAND_DATA07_USDHC3_DATA3, 0x1d4)
+			/* Bluetooth slow clock */
+			MX8MMN(IOMUXC_GPIO1_IO00_ANAMIX_REF_CLK_32K, 0x03)
+			MX8MMN(IOMUXC_GPIO1_IO04_GPIO1_IO4, 0x1c0)  /* bt wake */
 		>;
 	};
 
@@ -353,6 +367,9 @@
 			MX8MMN(IOMUXC_NAND_DATA05_USDHC3_DATA1, 0x1d6)
 			MX8MMN(IOMUXC_NAND_DATA06_USDHC3_DATA2, 0x1d6)
 			MX8MMN(IOMUXC_NAND_DATA07_USDHC3_DATA3, 0x1d6)
+			/* Bluetooth slow clock */
+			MX8MMN(IOMUXC_GPIO1_IO00_ANAMIX_REF_CLK_32K, 0x03)
+			MX8MMN(IOMUXC_GPIO1_IO04_GPIO1_IO4, 0x1c0)  /* bt wake */
 		>;
 	};
 
@@ -399,6 +416,22 @@
 		display = <&display_subsystem>;
 		pwms = <&pwm3 0 30000 0>;		/* 33.3 Khz */
 		status = "disabled";
+	};
+
+	bt-rfkill {
+		compatible = "rfkill-gpio";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_bt_rfkill>;
+		name = "bt-rfkill";
+		type = "bluetooth"; //<2>; /* Bluetooth */
+		reset-gpios = GP_BT_RFKILL_RESET;
+		status = "okay";
+	};
+
+	aml_bt: aml_bt {
+		compatible = "amlogic,aml-bt";
+		status = "okay";
+		reset-gpios = GP_BT_RFKILL_RESET;
 	};
 
 	connector {
@@ -931,13 +964,7 @@
 	assigned-clocks = <&clk IMX8MMN(CLK_UART3)>;
 	assigned-clock-parents = <&clk IMX8MMN(SYS_PLL1_80M)>;
 	uart-has-rtscts;
-	status = "disabled";
-
-	bluetooth {
-		compatible = "qcom,qca9377-bt";
-		enable-gpios = GP_BT_ENABLE;
-		max-speed = <3000000>;
-	};
+	status = "okay";
 };
 
 &usbotg1 {
