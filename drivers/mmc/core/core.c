@@ -25,6 +25,7 @@
 #include <linux/random.h>
 #include <linux/slab.h>
 #include <linux/of.h>
+#include <linux/gpio.h>
 
 #include <linux/mmc/card.h>
 #include <linux/mmc/host.h>
@@ -2210,7 +2211,22 @@ void mmc_rescan(struct work_struct *work)
 {
 	struct mmc_host *host =
 		container_of(work, struct mmc_host, detect.work);
-	int i;
+	int i, err;
+
+        static int gpio_wl_reg_on = 129;
+        if (gpio_wl_reg_on >= 0) {
+                err = gpio_request(gpio_wl_reg_on, "WL_REG_ON");
+                if (err < 0) {
+                        printk("AMPAK: %s: gpio_request(%d) for WL_REG_ON failed\n",
+                                __func__, gpio_wl_reg_on);
+                } else {
+                        err = gpio_direction_output(gpio_wl_reg_on, 1);
+                        if (err) {
+                                printk("AMPAK: %s: WL_REG_ON didn't output high\n", __FUNCTION__);
+                        }
+                }
+        }
+        gpio_free(gpio_wl_reg_on);
 
 	if (host->rescan_disable)
 		return;

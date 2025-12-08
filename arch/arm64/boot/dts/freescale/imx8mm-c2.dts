@@ -44,6 +44,9 @@
                         MX8MMN(IOMUXC_SD2_DATA2_GPIO2_IO17, 0x09)       /* Internal Pullup disabled  */
                         MX8MMN(IOMUXC_SD2_DATA1_GPIO2_IO16, 0x09)       /* Internal Pullup disabled  */
                         MX8MMN(IOMUXC_SD2_DATA0_GPIO2_IO15, 0x09)       /* Internal Pullup disabled  */
+
+#define GP_REG_WLAN_VMMC        <&gpio5 1 GPIO_ACTIVE_HIGH>
+                        MX8MMN(IOMUXC_SAI3_TXD_GPIO5_IO1, 0x16)
 		>;
 	};
 
@@ -213,13 +216,6 @@
 		>;
 	};
 
-	pinctrl_reg_wlan_vmmc: reg-wlan-vmmcgrp {
-		fsl,pins = <
-#define GP_REG_WLAN_VMMC	<&gpio3 20 GPIO_ACTIVE_HIGH>
-			MX8MMN(IOMUXC_SAI5_RXC_GPIO3_IO20, 0x16)
-		>;
-	};
-
 	pinctrl_sai2: sai2grp {
 		fsl,pins = <
 			/* Bluetooth PCM */
@@ -310,6 +306,7 @@
 			MX8MMN(IOMUXC_NAND_DATA07_USDHC3_DATA3, 0x1d0)
 			/* Bluetooth slow clock */
 			MX8MMN(IOMUXC_GPIO1_IO00_ANAMIX_REF_CLK_32K, 0x03)
+			MX8MMN(IOMUXC_SAI2_RXFS_GPIO4_IO21, 0x1c0)  /* wake host */
 			MX8MMN(IOMUXC_GPIO1_IO04_GPIO1_IO4, 0x1c0)  /* bt wake */
 		>;
 	};
@@ -322,8 +319,10 @@
 			MX8MMN(IOMUXC_NAND_DATA05_USDHC3_DATA1, 0x1d4)
 			MX8MMN(IOMUXC_NAND_DATA06_USDHC3_DATA2, 0x1d4)
 			MX8MMN(IOMUXC_NAND_DATA07_USDHC3_DATA3, 0x1d4)
+
 			/* Bluetooth slow clock */
 			MX8MMN(IOMUXC_GPIO1_IO00_ANAMIX_REF_CLK_32K, 0x03)
+			MX8MMN(IOMUXC_SAI2_RXFS_GPIO4_IO21, 0x1c0)  /* wake host */
 			MX8MMN(IOMUXC_GPIO1_IO04_GPIO1_IO4, 0x1c0)  /* bt wake */
 		>;
 	};
@@ -338,6 +337,7 @@
 			MX8MMN(IOMUXC_NAND_DATA07_USDHC3_DATA3, 0x1d6)
 			/* Bluetooth slow clock */
 			MX8MMN(IOMUXC_GPIO1_IO00_ANAMIX_REF_CLK_32K, 0x03)
+			MX8MMN(IOMUXC_SAI2_RXFS_GPIO4_IO21, 0x1c0)  /* wake host */
 			MX8MMN(IOMUXC_GPIO1_IO04_GPIO1_IO4, 0x1c0)  /* bt wake */
 		>;
 	};
@@ -455,18 +455,6 @@
 		regulator-name = "vref-5v";
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
-	};
-
-	reg_wlan_vmmc: regulator-wlan-vmmc {
-		compatible = "regulator-fixed";
-		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_reg_wlan_vmmc>;
-		regulator-name = "reg_wlan_vmmc";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		gpio = GP_REG_WLAN_VMMC;
-		startup-delay-us = <70000>;
-		enable-active-high;
 	};
 };
 
@@ -1016,7 +1004,6 @@
 	pinctrl-2 = <&pinctrl_usdhc3_200mhz>;
 	pm-ignore-notify;
 	status = "okay";
-	vmmc-supply = <&reg_wlan_vmmc>;
 	vqmmc-1-8-v;
 	vqmmc-supply = <&reg_vref_1v8>;
 };
