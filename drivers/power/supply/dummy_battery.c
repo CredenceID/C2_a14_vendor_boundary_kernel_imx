@@ -18,9 +18,12 @@
 #include <linux/power_supply.h>
 #include <linux/errno.h>
 #include <linux/slab.h>
+#include "dummy_battery.h"
+#include <linux/delay.h>
+#include <linux/power_supply.h>
 
 #define DUMMY_POWER_NUM 2
-#define POWER_SUPPLY_PROP_CAPACITY_VALUE 85
+#define POWER_SUPPLY_PROP_CAPACITY_VALUE 100
 #define POWER_SUPPLY_PROP_VOLTAGE_NOW_VALUE 3600000
 #define POWER_SUPPLY_PROP_CURRENT_NOW_VALUE 400000
 #define POWER_SUPPLY_PROP_CYCLE_COUNT_VALUE 32
@@ -69,6 +72,9 @@ static enum power_supply_property dummy_battery_props[] = {
     POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX,
     POWER_SUPPLY_PROP_ONLINE,
 };
+
+struct power_supply *dummy_usb_psy;
+struct power_supply *dummy_bat_psy;
 
 static enum power_supply_property dummy_usb_props[] = {
     POWER_SUPPLY_PROP_ONLINE,
@@ -119,7 +125,11 @@ static int dummy_battery_get_property(struct power_supply *psy,
     int ret = 0;
     switch (psp) {
         case POWER_SUPPLY_PROP_STATUS:
-            val->intval = POWER_SUPPLY_STATUS_CHARGING;
+            if (battery_property->online) {
+                val->intval = POWER_SUPPLY_STATUS_CHARGING;
+            } else {
+                val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+            }
             break;
         case POWER_SUPPLY_PROP_HEALTH:
             val->intval = POWER_SUPPLY_HEALTH_GOOD;
@@ -207,9 +217,36 @@ static const struct power_supply_desc dummy_power_desc[] = {
         .get_property = dummy_usb_get_property,
         .name = "usb",
         .property_is_writeable = dummy_usb_property_is_writeable,
-        .type = POWER_SUPPLY_TYPE_MAINS,
+        .type = POWER_SUPPLY_TYPE_USB,
     }
 };
+
+void dummy_battery_set_usb_online(bool online)
+{
+    pr_err("dummy_battery_set_usb_online is called\n");
+
+    if (!dummy_power_supplies[0] || !dummy_power_supplies[1]) {
+        pr_err("FAILURE: dummy_battery_set_usb_online FAILURE\n");
+        return;
+    }
+
+    usb_property->online       = online;
+    battery_property->online   = online;
+    battery_property->present  = true;
+    battery_property->health   = POWER_SUPPLY_HEALTH_GOOD;
+    battery_property->capacity = 100;
+    battery_property->status   = online ? POWER_SUPPLY_STATUS_CHARGING
+                                     : POWER_SUPPLY_STATUS_DISCHARGING;
+
+    power_supply_changed(dummy_power_supplies[0]);
+    power_supply_changed(dummy_power_supplies[1]);
+
+    pr_err("dummy_battery: USB %s, battery %s, capacity %d\n",
+            online ? "online" : "offline",
+            online ? "charging" : "discharging",
+            battery_property->capacity);
+}
+EXPORT_SYMBOL(dummy_battery_set_usb_online);
 
 static int __init dummy_power_init(void)
 {
@@ -232,6 +269,10 @@ static int __init dummy_power_init(void)
             goto failed;
         }
     }
+
+    msleep(1000);  // Wait for 1 second to ensure sysfs paths are initialized
+    dummy_battery_set_usb_online(true);  // USB is online and charging
+
     return 0;
 failed:
     while (--i >= 0)
