@@ -22,8 +22,8 @@
 
 	pinctrl_gpio_keys: gpio-keysgrp {
 		fsl,pins = <
-#define GP_GPIOKEY_LEFT		<&gpio5 27 GPIO_ACTIVE_LOW>
-			MX8MMN(IOMUXC_UART3_TXD_GPIO5_IO27, 0x149)
+#define GP_GPIOKEY_LEFT		<&gpio3 6 GPIO_ACTIVE_LOW>
+			MX8MMN(IOMUXC_NAND_DATA00_GPIO3_IO6, 0x149)
 #define GP_GPIOKEY_CENTER	<&gpio1 8 GPIO_ACTIVE_LOW>
 			MX8MMN(IOMUXC_GPIO1_IO08_GPIO1_IO8, 0x149)
 #define GP_GPIOKEY_RIGHT	<&gpio1 6 GPIO_ACTIVE_LOW>
@@ -35,7 +35,7 @@
 		fsl,pins = <
 			/* JS_PIN6 */
 			MX8MMN(IOMUXC_GPIO1_IO14_GPIO1_IO14, 0x149)
-			
+
 			/* Finger Print */
 #define GP_USBOTG2_EN  <&gpio3 23 GPIO_ACTIVE_HIGH>
             MX8MMN(IOMUXC_SAI5_RXD2_GPIO3_IO23, 0x09) /* SAI5_RXD2 */
@@ -194,7 +194,7 @@
 			MX8MMN(IOMUXC_GPIO1_IO11_GPIO1_IO11, 0x141)
 		>;
 	};
-	
+
 	pinctrl_pwm2: pwm2grp {
 		fsl,pins = <
 			MX8MMN(IOMUXC_SPDIF_RX_PWM2_OUT, 0x16)
@@ -440,6 +440,33 @@
 					remote-endpoint = <&hd3ss3220_in_ep>;
 				};
 			};
+		};
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_gpio_keys>;
+
+		left {
+			label = "Left Button";
+			gpios = GP_GPIOKEY_LEFT;
+			linux,code = <KEY_BACK>;
+			gpio-key,wakeup;
+		};
+
+		center {
+			label = "Center Button";
+			gpios = GP_GPIOKEY_CENTER;
+			linux,code = <KEY_MENU>;
+			gpio-key,wakeup;
+		};
+
+		right {
+			label = "Right Button";
+			gpios = GP_GPIOKEY_RIGHT;
+			linux,code = <KEY_FORWARD>;
+			gpio-key,wakeup;
 		};
 	};
 
