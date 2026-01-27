@@ -195,6 +195,13 @@
 		>;
 	};
 
+	pinctrl_leds: ledsgrp {
+		fsl,pins = <
+#define GP_LED_VIBRATOR		<&gpio3 24 GPIO_ACTIVE_HIGH>
+			MX8MMN(IOMUXC_SAI5_RXD3_GPIO3_IO24, 0x109)
+		>;
+	};
+
 	pinctrl_pwm2: pwm2grp {
 		fsl,pins = <
 			MX8MMN(IOMUXC_SPDIF_RX_PWM2_OUT, 0x16)
@@ -467,6 +474,18 @@
 			gpios = GP_GPIOKEY_RIGHT;
 			linux,code = <KEY_FORWARD>;
 			gpio-key,wakeup;
+		};
+	};
+
+	leds: leds {
+		compatible = "gpio-leds";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_leds>;
+
+		vibrator {
+			gpios = GP_LED_VIBRATOR;
+			default-state = "off";
+			linux,default-trigger = "transient";
 		};
 	};
 
