@@ -15,6 +15,10 @@
 #include <linux/usb/typec.h>
 #include <linux/delay.h>
 
+#include <linux/power/max77818-charger.h>
+
+extern void max77818_set_usb_online(bool online);
+
 #define HD3SS3220_REG_CN_STAT_CTRL	0x09
 #define HD3SS3220_REG_GEN_CTRL		0x0A
 #define HD3SS3220_REG_DEV_REV		0xA0
@@ -123,8 +127,24 @@ static void hd3ss3220_set_role(struct hd3ss3220 *hd3ss3220)
 static irqreturn_t hd3ss3220_irq(struct hd3ss3220 *hd3ss3220)
 {
 	int err;
+	u32 val;
 
 	hd3ss3220_set_role(hd3ss3220);
+
+	err = regmap_read(hd3ss3220->regmap, HD3SS3220_REG_CN_STAT_CTRL, &val);
+	if (err < 0) {
+		pr_err("REG READ returned error\n");
+		return IRQ_NONE;
+	}
+
+	if (val & HD3SS3220_REG_CN_STAT_CTRL_ATTACHED_STATE_MASK) {
+		pr_err("hd3ss322 USB connected\n");
+		max77818_set_usb_online(true);
+	} else {
+		pr_err("hd3ss322 USB disconnected\n");
+		max77818_set_usb_online(false);
+	}
+
 	err = regmap_write_bits(hd3ss3220->regmap, HD3SS3220_REG_CN_STAT_CTRL,
 				HD3SS3220_REG_CN_STAT_CTRL_INT_STATUS,
 				HD3SS3220_REG_CN_STAT_CTRL_INT_STATUS);

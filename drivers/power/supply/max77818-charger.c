@@ -367,6 +367,43 @@ void max77818_set_ac_online(bool online)
 }
 EXPORT_SYMBOL(max77818_set_ac_online);
 
+void max77818_set_usb_online(bool online)
+{
+	union power_supply_propval prop_val;
+
+	if (!max77818_psy) {
+		pr_warn("max77818: charger not ready, deferring USB %s\n",
+			online ? "online" : "offline");
+
+	        atomic_set(&pending_usb_online, online ? 1 : 0);
+		return;
+	}
+
+	pr_info("max77818_set_usb_online: USB %s\n",
+		online ? "connected" : "disconnected");
+
+	prop_val.intval = online ? 1 : 0;
+	power_supply_set_property(max77818_psy,
+				  POWER_SUPPLY_PROP_ONLINE,
+				  &prop_val);
+
+	prop_val.intval = online ?
+		POWER_SUPPLY_STATUS_CHARGING :
+		POWER_SUPPLY_STATUS_DISCHARGING;
+
+	power_supply_set_property(max77818_psy,
+				  POWER_SUPPLY_PROP_STATUS,
+				  &prop_val);
+
+	power_supply_changed(max77818_psy);
+
+	if (fg_chip_global && fg_chip_global->battery)
+		power_supply_changed(fg_chip_global->battery);
+
+	atomic_set(&pending_usb_online, -1);
+}
+EXPORT_SYMBOL(max77818_set_usb_online);
+
 static int max77818_charger_get_input_current(struct max77818_charger_data
 	*charger)
 {
@@ -1114,6 +1151,12 @@ static int max77818_charger_probe(struct platform_device *pdev)
 	}
 
 	max77818_psy = charger->psy_chg;
+
+	if (atomic_read(&pending_usb_online) != -1) {
+	    bool online = atomic_read(&pending_usb_online);
+	    pr_info("%s: applying pending USB online state\n", __func__);
+	    max77818_set_usb_online(online);
+	}
 
 	if (atomic_read(&pending_ac_online) != -1) {
 	    bool online = atomic_read(&pending_ac_online);
