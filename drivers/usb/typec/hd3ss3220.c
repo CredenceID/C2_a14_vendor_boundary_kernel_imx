@@ -14,7 +14,6 @@
 #include <linux/slab.h>
 #include <linux/usb/typec.h>
 #include <linux/delay.h>
-#include "../../power/supply/dummy_battery.h"
 
 #define HD3SS3220_REG_CN_STAT_CTRL	0x09
 #define HD3SS3220_REG_GEN_CTRL		0x0A
@@ -124,28 +123,8 @@ static void hd3ss3220_set_role(struct hd3ss3220 *hd3ss3220)
 static irqreturn_t hd3ss3220_irq(struct hd3ss3220 *hd3ss3220)
 {
 	int err;
-	u32 val;
 
 	hd3ss3220_set_role(hd3ss3220);
-	
-	// Read attached state from hardware register
-	err = regmap_read(hd3ss3220->regmap, HD3SS3220_REG_CN_STAT_CTRL, &val);
-
-	if (err < 0) {
-		pr_err("REG READ returned error\n");
-		return IRQ_NONE;
-	}
-
-	if (val & HD3SS3220_REG_CN_STAT_CTRL_ATTACHED_STATE_MASK) {
-		pr_err("USB connected TRUE\n");
-		// USB connected
-		dummy_battery_set_usb_online(true);
-	} else {
-		pr_err("USB DISCONNECTED\n");
-		// USB disconnected
-		dummy_battery_set_usb_online(false);
-	}
-
 	err = regmap_write_bits(hd3ss3220->regmap, HD3SS3220_REG_CN_STAT_CTRL,
 				HD3SS3220_REG_CN_STAT_CTRL_INT_STATUS,
 				HD3SS3220_REG_CN_STAT_CTRL_INT_STATUS);
