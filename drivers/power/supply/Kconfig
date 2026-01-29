@@ -591,6 +591,16 @@ config CHARGER_MAX77976
 	  This driver can also be built as a module. If so, the module will be
 	  called max77976_charger.
 
+config POWER_MAX77818
+	bool "Maxim Integrated MAX77818 Charger with Fuel Gauge"
+	depends on MFD_MAX77818
+	help
+	  Say yes here to add support for Maxim Integrated MAX77818.
+	  This is a 3A Switch Mode Charger with Fuel Gauge.
+	  This driver provides common support for accessing the device,
+	  additional drivers must be enabled in order to use the functionality
+	  of the device.
+
 config CHARGER_MAX8997
 	tristate "Maxim MAX8997/MAX8966 PMIC battery charger driver"
 	depends on MFD_MAX8997 && REGULATOR_MAX8997
