@@ -110,8 +110,8 @@
 		fsl,pins = <
 #define GPIRQ_MAX77818_WCHG_VALID_INT	<&gpio5 0 IRQ_TYPE_LEVEL_LOW>
 			MX8MMN(IOMUXC_SAI3_TXC_GPIO5_IO0, 0x149)
-#define GPIRQ_MAX77818_CHG_INT		<&gpio1 5 IRQ_TYPE_LEVEL_LOW>
-			MX8MMN(IOMUXC_GPIO1_IO05_GPIO1_IO5, 0x149)
+#define GPIRQ_MAX77818_CHG_INT          <&gpio1 5 IRQ_TYPE_LEVEL_LOW>
+                        MX8MMN(IOMUXC_GPIO1_IO05_GPIO1_IO5, 0x149)
 		>;
 	};
 
@@ -738,25 +738,30 @@
 
 &i2c2d {
         max77818@66 {
-                compatible = "maxim,max77823";
+                compatible = "maxim,max77818";
                 pinctrl-names = "default";
                 pinctrl-0 = <&pinctrl_i2c2_max77818>;
                 reg = <0x66>;
                 interrupts-extended = GPIRQ_MAX77818_CHG_INT;
                 max77823,irq-gpio = GPIRQ_MAX77818_CHG_INT;
                 max77823,wakeup = <1>;
+                status = "okay";
 
-                max77823_battery: battery {
-                        compatible = "samsung,sec-battery";
-                };
-
-                max77823_charger: charger {
-                        compatible = "samsung,max77823-charger";
-                };
-
-                max77823_fuelgauge: fuelgauge {
-                        compatible = "samsung,max77823-fuelgauge";
-                };
+		charger {
+			compatible = "maxim,max77818-charger";
+			status = "okay";
+			fast_charge_timer = <0>;
+			fast_charge_current = <2000>;
+			charge_termination_voltage = <4250>;
+			topoff_timer = <0>;
+			topoff_current = <200>;
+			restart_threshold = <150>;
+			input_current_limit = <2000>;
+		};
+		fuelgauge {
+			compatible = "maxim,max77818-fuelgauge";
+			fuelgauge,fuel_alert_soc = <2>;
+		};
         };
 };
 
