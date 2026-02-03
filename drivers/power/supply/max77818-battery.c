@@ -514,17 +514,21 @@ static int max77818_fg_remove(struct platform_device *pdev)
 #ifdef CONFIG_PM
 static int max77818_fg_suspend(struct device *dev)
 {
-	struct max77818_chip *chip = dev_get_drvdata(dev);
+	struct max77818_chip *chip = fg_chip_global;
 
-	cancel_delayed_work(&chip->work);
+	if (chip && chip->fg_irq > 0)
+		cancel_delayed_work(&chip->work);
+
 	return 0;
 }
 
 static int max77818_fg_resume(struct device *dev)
 {
-	struct max77818_chip *chip = dev_get_drvdata(dev);
+	struct max77818_chip *chip = fg_chip_global;
 
-	schedule_delayed_work(&chip->work, MAX77818_FG_DELAY);
+	if (chip && chip->fg_irq > 0)
+		schedule_delayed_work(&chip->work, MAX77818_FG_DELAY);
+
 	return 0;
 }
 #else
