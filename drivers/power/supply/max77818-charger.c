@@ -367,61 +367,6 @@ void max77818_set_ac_online(bool online)
 }
 EXPORT_SYMBOL(max77818_set_ac_online);
 
-void max77818_set_usb_online(bool online)
-{
-	union power_supply_propval prop_val;
-
-	if (!max77818_psy) {
-		pr_warn("max77818: charger not ready, deferring USB %s\n",
-			online ? "online" : "offline");
-
-	        atomic_set(&pending_usb_online, online ? 1 : 0);
-		return;
-	}
-
-	pr_info("max77818_set_usb_online: USB %s\n",
-		online ? "connected" : "disconnected");
-
-	prop_val.intval = online ? 1 : 0;
-	power_supply_set_property(max77818_psy,
-				  POWER_SUPPLY_PROP_ONLINE,
-				  &prop_val);
-
-	prop_val.intval = online ?
-		POWER_SUPPLY_STATUS_CHARGING :
-		POWER_SUPPLY_STATUS_DISCHARGING;
-
-	/* Set charging currents */
-	if (online) {
-		struct max77818_charger_data *charger;
-
-		charger = max77818_psy->drv_data;
-		if (charger && charger->pdata) {
-			int input_current = charger->pdata->input_current_limit;
-			int charge_current = charger->pdata->fast_charge_current;
-
-			/* If plugged into a PC, stay conservative */
-			input_current = min(input_current, 2000);
-			charge_current = min(charge_current, 2000);
-
-			max77818_charger_set_input_current(charger, input_current);
-			max77818_charger_set_charge_current(charger, charge_current);
-		}
-	}
-
-	power_supply_set_property(max77818_psy,
-				  POWER_SUPPLY_PROP_STATUS,
-				  &prop_val);
-
-	power_supply_changed(max77818_psy);
-
-	if (fg_chip_global && fg_chip_global->battery)
-		power_supply_changed(fg_chip_global->battery);
-
-	atomic_set(&pending_usb_online, -1);
-}
-EXPORT_SYMBOL(max77818_set_usb_online);
-
 static int max77818_charger_get_input_current(struct max77818_charger_data
 	*charger)
 {
@@ -542,6 +487,60 @@ static int max77818_charger_set_charge_current(struct max77818_charger_data
 	return rc;
 
 }
+
+void max77818_set_usb_online(bool online)
+{
+	union power_supply_propval prop_val;
+	struct max77818_charger_data *charger;
+
+	if (!max77818_psy) {
+		pr_warn("max77818: charger not ready, deferring USB %s\n",
+			online ? "online" : "offline");
+
+	        atomic_set(&pending_usb_online, online ? 1 : 0);
+		return;
+	}
+
+	pr_info("max77818_set_usb_online: USB %s\n",
+		online ? "connected" : "disconnected");
+
+	prop_val.intval = online ? 1 : 0;
+	power_supply_set_property(max77818_psy,
+				  POWER_SUPPLY_PROP_ONLINE,
+				  &prop_val);
+
+	prop_val.intval = online ?
+		POWER_SUPPLY_STATUS_CHARGING :
+		POWER_SUPPLY_STATUS_DISCHARGING;
+
+	/* Set charging currents */
+	if (online) {
+		charger = max77818_psy->drv_data;
+		if (charger && charger->pdata) {
+			int input_current = charger->pdata->input_current_limit;
+			int charge_current = charger->pdata->fast_charge_current;
+
+			/* If plugged into a PC, stay conservative */
+			input_current = min(input_current, 2000);
+			charge_current = min(charge_current, 2000);
+
+			max77818_charger_set_input_current(charger, input_current);
+			max77818_charger_set_charge_current(charger, charge_current);
+		}
+	}
+
+	power_supply_set_property(max77818_psy,
+				  POWER_SUPPLY_PROP_STATUS,
+				  &prop_val);
+
+	power_supply_changed(max77818_psy);
+
+	if (fg_chip_global && fg_chip_global->battery)
+		power_supply_changed(fg_chip_global->battery);
+
+	atomic_set(&pending_usb_online, -1);
+}
+EXPORT_SYMBOL(max77818_set_usb_online);
 
 static int max77818_charger_set_topoff_current(struct max77818_charger_data
 	*charger,
