@@ -355,9 +355,18 @@ out:
 }
 
 static struct mfd_cell max77818_devices[] = {
-	{ .name = MAX77818_REGULATOR_NAME,		},
-	{ .name = MAX77818_CHARGER_NAME,		},
-	{ .name = MAX77818_FUELGAUGE_NAME,		},
+	{
+		.name = MAX77818_REGULATOR_NAME,
+		.of_compatible = "maxim,max77818-regulator",
+	},
+	{
+		.name = MAX77818_CHARGER_NAME,
+		.of_compatible = "maxim,max77818-charger",
+	},
+	{
+		.name = MAX77818_FUELGAUGE_NAME,
+		.of_compatible = "maxim,max77818-fuelgauge",
+	},
 };
 
 static int max77818_pmic_setup(struct max77818_dev *me)
