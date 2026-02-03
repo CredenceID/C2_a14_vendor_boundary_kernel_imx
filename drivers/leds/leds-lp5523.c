@@ -115,6 +115,26 @@ static inline void lp5523_wait_opmode_done(void)
 	usleep_range(1000, 2000);
 }
 
+static int lp5523_suspend(struct device *dev)
+{
+	struct lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
+
+	lp55xx_write(led->chip, LP5523_REG_ENABLE_LEDS_MSB, 0x00);
+	lp55xx_write(led->chip, LP5523_REG_ENABLE_LEDS_LSB, 0x00);
+
+	return 0;
+}
+
+static int lp5523_resume(struct device *dev)
+{
+	struct lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
+
+	lp55xx_write(led->chip, LP5523_REG_ENABLE_LEDS_MSB, 0x01);
+	lp55xx_write(led->chip, LP5523_REG_ENABLE_LEDS_LSB, 0xff);
+
+	return 0;
+}
+
 static void lp5523_set_led_current(struct lp55xx_led *led, u8 led_current)
 {
 	led->led_current = led_current;
@@ -975,10 +995,16 @@ static const struct of_device_id of_lp5523_leds_match[] = {
 MODULE_DEVICE_TABLE(of, of_lp5523_leds_match);
 #endif
 
+static const struct dev_pm_ops lp5523_pm_ops = {
+	.suspend = lp5523_suspend,
+	.resume = lp5523_resume,
+};
+
 static struct i2c_driver lp5523_driver = {
 	.driver = {
 		.name	= "lp5523x",
 		.of_match_table = of_match_ptr(of_lp5523_leds_match),
+		.pm = &lp5523_pm_ops,
 	},
 	.probe		= lp5523_probe,
 	.remove		= lp5523_remove,
