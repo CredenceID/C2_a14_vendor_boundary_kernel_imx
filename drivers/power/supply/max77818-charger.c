@@ -391,6 +391,24 @@ void max77818_set_usb_online(bool online)
 		POWER_SUPPLY_STATUS_CHARGING :
 		POWER_SUPPLY_STATUS_DISCHARGING;
 
+	/* Set charging currents */
+	if (online) {
+		struct max77818_charger_data *charger;
+
+		charger = max77818_psy->drv_data;
+		if (charger && charger->pdata) {
+			int input_current = charger->pdata->input_current_limit;
+			int charge_current = charger->pdata->fast_charge_current;
+
+			/* If plugged into a PC, stay conservative */
+			input_current = min(input_current, 2000);
+			charge_current = min(charge_current, 2000);
+
+			max77818_charger_set_input_current(charger, input_current);
+			max77818_charger_set_charge_current(charger, charge_current);
+		}
+	}
+
 	power_supply_set_property(max77818_psy,
 				  POWER_SUPPLY_PROP_STATUS,
 				  &prop_val);
