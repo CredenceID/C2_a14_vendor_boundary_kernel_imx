@@ -1310,10 +1310,9 @@
 	keep-power-in-suspend;
 	no-sd-uhs-sdr104;
 	non-removable;
-	pinctrl-names = "default", "state_100mhz", "state_200mhz";
+	pinctrl-names = "default", "state_100mhz";
 	pinctrl-0 = <&pinctrl_usdhc3>;
 	pinctrl-1 = <&pinctrl_usdhc3_100mhz>;
-	pinctrl-2 = <&pinctrl_usdhc3_200mhz>;
 	pm-ignore-notify;
 	status = "okay";
 	vqmmc-1-8-v;
