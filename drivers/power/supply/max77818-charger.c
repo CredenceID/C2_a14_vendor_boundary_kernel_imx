@@ -311,24 +311,7 @@ static bool max77818_charger_present_input(struct max77818_charger_data
 static bool max77818_wcharger_present_input(struct max77818_charger_data
 	*charger)
 {
-	u8 chg_int_ok = 0;
-	int rc;
-
-	rc = max77818_read(charger->regmap, REG_CHG_INT_OK, &chg_int_ok);
-	if (rc < 0)
-		return false;
-
-	if ((chg_int_ok & BIT_WCIN_OK) == BIT_WCIN_OK)
-		return true;
-	/* check whether charging or not in the UVLO condition */
-	if (((charger->details_0 & BIT_WCIN_DTLS) == 0) &&
-			(((charger->details_1 & BIT_CHG_DTLS) ==
-					CHG_DTLS_FASTCHARGE_CC)		||
-			 ((charger->details_1 & BIT_CHG_DTLS) ==
-					CHG_DTLS_FASTCHARGE_CV))) {
-		return true;
-	} else
-		return false;
+	return false;
 }
 
 void max77818_set_ac_online(bool online)
