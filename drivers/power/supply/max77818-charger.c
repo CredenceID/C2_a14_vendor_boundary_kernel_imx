@@ -557,19 +557,7 @@ static int max77818_charger_set_enable(struct max77818_charger_data
 static int max77818_charger_exit_dev(struct max77818_charger_data
 	*charger)
 {
-	struct max77818_charger_platform_data *pdata = charger->pdata;
-	int rc;
-
-	rc = max77818_charger_set_enable(charger, false);
-	if (rc < 0) {
-		pr_err("CHG_CNFG_00 write error [%d]\n", rc);
-		return rc;
-	}
-
-	rc = max77818_charger_set_charge_current(charger,
-		pdata->fast_charge_current);
-
-	return rc;
+	return 0;
 }
 
 static int max77818_charger_init_dev(struct max77818_charger_data
