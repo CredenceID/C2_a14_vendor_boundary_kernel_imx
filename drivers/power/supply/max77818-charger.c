@@ -816,10 +816,6 @@ static int max77818_charger_set_property(struct power_supply *psy,
 
 	switch (psp) {
 	case POWER_SUPPLY_PROP_ONLINE:
-		rc = max77818_charger_set_enable(charger, val->intval);
-		if (rc < 0)
-			goto out;
-
 		/* apply charge current */
 		rc = max77818_charger_set_charge_current(charger,
 			charger->pdata->fast_charge_current);
