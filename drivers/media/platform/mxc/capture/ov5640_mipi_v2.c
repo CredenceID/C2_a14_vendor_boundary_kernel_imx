@@ -31,7 +31,7 @@
 #include <media/v4l2-event.h>
 #include "ov5640_mipi.h"
 
-#define DRIVER_ID_STR	"ov5640_mipisubdev"
+#define DRIVER_ID_STR	"ov5640_mipi"
 
 static DEFINE_MUTEX(ov5640_mutex);
 
