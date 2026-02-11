@@ -58,7 +58,7 @@
 
 #define MAX77818_FG_DELAY		1000
 #define MAX77818_BATTERY_FULL	100
-#define MAX77818_BATTERY_LOW	15
+#define MAX77818_BATTERY_LOW	5
 
 #define MAX77818_VERSION_NO	0x20B0
 static char *batt_supplied_to[] = {
