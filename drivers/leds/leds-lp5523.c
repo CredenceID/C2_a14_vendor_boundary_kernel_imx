@@ -118,9 +118,10 @@ static inline void lp5523_wait_opmode_done(void)
 static int lp5523_suspend(struct device *dev)
 {
 	struct lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
+	struct lp55xx_platform_data *pdata = led->chip->pdata;
 
-	lp55xx_write(led->chip, LP5523_REG_ENABLE_LEDS_MSB, 0x00);
-	lp55xx_write(led->chip, LP5523_REG_ENABLE_LEDS_LSB, 0x00);
+	if (pdata && pdata->enable_gpiod)
+		gpiod_set_value(pdata->enable_gpiod, 0);
 
 	return 0;
 }
@@ -128,9 +129,11 @@ static int lp5523_suspend(struct device *dev)
 static int lp5523_resume(struct device *dev)
 {
 	struct lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
+	struct lp55xx_platform_data *pdata = led->chip->pdata;
 
-	lp55xx_write(led->chip, LP5523_REG_ENABLE_LEDS_MSB, 0x01);
-	lp55xx_write(led->chip, LP5523_REG_ENABLE_LEDS_LSB, 0xff);
+	if (pdata && pdata->enable_gpiod)
+		gpiod_set_value(pdata->enable_gpiod, 1);
+	lp55xx_write(led->chip, LP5523_REG_ENABLE, LP5523_ENABLE);
 
 	return 0;
 }
