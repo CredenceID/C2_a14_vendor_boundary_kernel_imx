@@ -52,7 +52,6 @@
 *
 *****************************************************************************/
 
-
 #include "gc_hal_kernel_linux.h"
 #include "gc_hal_kernel_platform.h"
 #include "gc_hal_kernel_device.h"
@@ -175,7 +174,7 @@ static int force_contiguous_lowmem_shrink(IN gckKERNEL Kernel)
     int min_adj = 0;
     int selected_tasksize = 0;
     int selected_oom_adj;
-
+ 
     /* Return if we already have a oom crash pending
      */
     if (oom_crashpending &&
@@ -404,8 +403,8 @@ static void release_idr(struct idr *idr, int id)
     mutex_unlock(&gpufreq_cooling_lock);
 }
 
-struct thermal_cooling_device *device_gpu_cooling_register(struct device_node *np,
-                                                           unsigned long states)
+static struct thermal_cooling_device *device_gpu_cooling_register(struct device_node *np,
+                                                                  unsigned long states)
 {
     struct thermal_cooling_device *cdev;
     struct gpufreq_cooling_device *gpufreq_dev = NULL;
@@ -440,7 +439,7 @@ struct thermal_cooling_device *device_gpu_cooling_register(struct device_node *n
     return cdev;
 }
 
-void device_gpu_cooling_unregister(struct thermal_cooling_device *cdev)
+static void device_gpu_cooling_unregister(struct thermal_cooling_device *cdev)
 {
     struct gpufreq_cooling_device *gpufreq_dev = cdev->devdata;
 
@@ -515,7 +514,7 @@ static ssize_t gpu3DClockScale_show(struct device_driver *dev, char *buf)
     }
 
     snprintf(buf, PAGE_SIZE, "%d\n", currentf);
-
+    
     return strlen(buf);
 }
 
@@ -975,7 +974,7 @@ static inline int get_power_imx8_subsystem(struct device *pdev)
 
     while ((core_node = of_parse_phandle(node, "cores", i++)) != NULL) {
         struct platform_device *pdev_gpu = NULL;
-
+        
         clk_shader = NULL;
         clk_core = NULL;
         clk_axi = NULL;
@@ -1052,7 +1051,7 @@ static inline int get_power_imx8_subsystem(struct device *pdev)
         else if (!gpu_ipcHandle) {
             sc_err_t sciErr;
             uint32_t mu_id;
-
+        
             sciErr = sc_ipc_getMuID(&mu_id);
 
             if (sciErr != SC_ERR_NONE) {
@@ -1810,7 +1809,7 @@ int set_clock(int gpu, int enable)
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 5, 0)
 #ifdef CONFIG_PM
-#ifdef CONFIG_PM_RUNTIME
+#if defined(CONFIG_PM_RUNTIME) || LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
 static int gpu_runtime_suspend(struct device *dev)
 {
     release_bus_freq(BUS_FREQ_HIGH);
@@ -1842,7 +1841,7 @@ static int adjust_platform_driver(struct platform_driver *driver)
     memcpy(&gpu_pm_ops, driver->driver.pm, sizeof(struct dev_pm_ops));
 
     /* Add runtime PM callback. */
-#ifdef CONFIG_PM_RUNTIME
+#if defined(CONFIG_PM_RUNTIME) || LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)
     gpu_pm_ops.runtime_suspend = gpu_runtime_suspend;
     gpu_pm_ops.runtime_resume = gpu_runtime_resume;
     gpu_pm_ops.runtime_idle = NULL;

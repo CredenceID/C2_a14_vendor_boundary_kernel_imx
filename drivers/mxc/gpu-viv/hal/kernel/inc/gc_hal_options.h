@@ -52,7 +52,6 @@
 *
 *****************************************************************************/
 
-
 #ifndef __gc_hal_options_h_
 #define __gc_hal_options_h_
 
@@ -364,7 +363,7 @@
  *       Number of bytes in a command buffer.
  */
 #ifndef gcdCMD_BUFFER_SIZE
-#if 0
+#if gcdCAPTURE_ONLY_MODE
 #        define gcdCMD_BUFFER_SIZE                  (4 << 10)
 #    else
 #        define gcdCMD_BUFFER_SIZE                  (128 << 10)
@@ -386,7 +385,7 @@
  *       Number of command buffers to use per client.
  */
 #ifndef gcdCMD_BUFFERS
-#if 0
+#if gcdCAPTURE_ONLY_MODE
 #        define gcdCMD_BUFFERS                      1
 #    else
 #        define gcdCMD_BUFFERS                      2
@@ -569,7 +568,11 @@
  *   For CAPTURE ONLY MODE, should make sure that gcdENABLE_BANK_ALIGNMENT is disabled.
  */
 #ifndef gcdENABLE_BANK_ALIGNMENT
+#if gcdCAPTURE_ONLY_MODE
 #        define gcdENABLE_BANK_ALIGNMENT            0
+#    else
+#        define gcdENABLE_BANK_ALIGNMENT            0
+#    endif
 #endif
 
 /*
@@ -1604,6 +1607,15 @@
  *
  *   Calculating the time taken by 2D driver
  */
+
+ /*
+  *   gcdLOCAL_MEMORY_USAGE
+  *
+  *   Record usage of local memory and pass to kernel
+  */
+#ifndef gcdLOCAL_MEMORY_USAGE
+#    define gcdLOCAL_MEMORY_USAGE                 1
+#endif
 
 #endif /* __gc_hal_options_h_ */
 

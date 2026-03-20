@@ -52,7 +52,6 @@
 *
 *****************************************************************************/
 
-
 #include "gc_hal_kernel_precomp.h"
 
 #if defined(__QNXNTO__)
@@ -1723,7 +1722,7 @@ _AllocateVirtualChunk(IN gckKERNEL Kernel,
 
     gcmkVERIFY_ARGUMENT(Node != gcvNULL);
     gcmkVERIFY_ARGUMENT(VidMemBlock != gcvNULL);
-    gcmkVERIFY_ARGUMENT(Bytes > 0);
+    gcmkVERIFY_ARGUMENT(Bytes != gcvNULL && *Bytes > 0);
     gcmkVERIFY_ARGUMENT(Type < gcvVIDMEM_TYPE_COUNT);
 
     gcmkONERROR(gckOS_AcquireMutex(Kernel->os, VidMemBlock->mutex, gcvINFINITE));
@@ -1896,26 +1895,13 @@ gckVIDMEM_Free(IN gckKERNEL Kernel, IN gcuVIDMEM_NODE_PTR Node)
 
         if (Node->VidMem.kvaddr) {
 #if gcdCAPTURE_ONLY_MODE
-            gcsDATABASE_PTR database = gcvNULL;
-            gctUINT32 processID;
-
-            gcmkONERROR(gckOS_GetProcessID(&processID));
-
-            if (processID)
-                gckKERNEL_FindDatabase(Kernel, processID, gcvFALSE, &database);
-
-            if (database && database->matchCaptureOnly) {
-                gcmkVERIFY_OK(gcmkOS_SAFE_FREE(Kernel->os, Node->VidMem.kvaddr));
-            } else {
-                gcmkONERROR(gckOS_DestroyKernelMapping(Kernel->os,
-                                                           Node->VidMem.parent->physical,
-                                                           Node->VidMem.kvaddr));
-            }
+            gcmkVERIFY_OK(gcmkOS_SAFE_FREE(Kernel->os, Node->VidMem.kvaddr));
 #else
             gcmkONERROR(gckOS_DestroyKernelMapping(Kernel->os,
-                                                       Node->VidMem.parent->physical,
-                                                       Node->VidMem.kvaddr));
+                                                   Node->VidMem.parent->physical,
+                                                   Node->VidMem.kvaddr));
 #endif
+
             Node->VidMem.kvaddr = gcvNULL;
         }
 
@@ -2194,11 +2180,6 @@ gckVIDMEM_Lock(IN gckKERNEL Kernel,
     if (Node->VidMem.locked++ == 0) {
         gctADDRESS address;
         gctADDRESS offset = (gctADDRESS)Node->VidMem.offset;
-#if gcdCAPTURE_ONLY_MODE
-        gcsDATABASE_PTR database = gcvNULL;
-        gctUINT32 processID;
-#endif
-
 
         switch (Node->VidMem.pool) {
         case gcvPOOL_LOCAL_EXCLUSIVE:
@@ -2225,20 +2206,7 @@ gckVIDMEM_Lock(IN gckKERNEL Kernel,
             /* FALLTHRU */
             gcmkFALLTHRU;
         case gcvPOOL_SYSTEM:
-#if gcdCAPTURE_ONLY_MODE
-            gcmkONERROR(gckOS_GetProcessID(&processID));
-
-            if (processID) {
-                gckKERNEL_FindDatabase(Kernel, processID, gcvFALSE, &database);
-
-                if (database && database->matchCaptureOnly)
-                    address = Kernel->device->contiguousBases[Kernel->device->memIndex] + offset;
-                else
-                    address = Kernel->contiguousBaseAddresses[Kernel->device->memIndex] + offset;
-    }
-#else
             address = Kernel->contiguousBaseAddresses[Kernel->device->memIndex] + offset;
-#endif
             break;
         }
 
@@ -3709,10 +3677,6 @@ gckVIDMEM_NODE_LockCPU(IN gckKERNEL Kernel, IN gckVIDMEM_NODE NodeObject,
     gcuVIDMEM_NODE_PTR node;
     gckVIDMEM_BLOCK    vidMemBlock;
     gctPOINTER         logical = gcvNULL;
-#if gcdCAPTURE_ONLY_MODE
-    gcsDATABASE_PTR database = gcvNULL;
-    gctUINT32 processID;
-#endif
 
     gcmkHEADER_ARG("NodeObject=%p", NodeObject);
 
@@ -3747,24 +3711,9 @@ gckVIDMEM_NODE_LockCPU(IN gckKERNEL Kernel, IN gckVIDMEM_NODE NodeObject,
             gcmkONERROR(gcvSTATUS_INVALID_REQUEST);
 #endif
 
-#if gcdCAPTURE_ONLY_MODE
-        gcmkONERROR(gckOS_GetProcessID(&processID));
-
-        if (processID)
-            gcmkONERROR(gckKERNEL_FindDatabase(Kernel, processID, gcvFALSE, &database));
-#endif
-
         if (FromUser) {
 #if gcdCAPTURE_ONLY_MODE
-            if (database && database->matchCaptureOnly)
-                node->VidMem.logical = NodeObject->captureLogical;
-            else
-                /* Map video memory pool to user space. */
-                gcmkONERROR(gckKERNEL_MapVideoMemory(Kernel, gcvTRUE, node->VidMem.pool,
-                                                     node->VidMem.physical,
-                                                     node->VidMem.offset,
-                                                     node->VidMem.bytes,
-                                                     &node->VidMem.logical));
+            node->VidMem.logical = NodeObject->captureLogical;
 #else
             /* Map video memory pool to user space. */
             gcmkONERROR(gckKERNEL_MapVideoMemory(Kernel, gcvTRUE, node->VidMem.pool,
@@ -3773,18 +3722,13 @@ gckVIDMEM_NODE_LockCPU(IN gckKERNEL Kernel, IN gckVIDMEM_NODE NodeObject,
                                                  node->VidMem.bytes,
                                                  &node->VidMem.logical));
 #endif
+
             logical = node->VidMem.logical;
         } else {
             /* Map video memory pool to kernel space. */
             if (!node->VidMem.kvaddr) {
 #if gcdCAPTURE_ONLY_MODE
-                if (database && database->matchCaptureOnly)
-                    gcmkONERROR(gckOS_Allocate(os, node->VidMem.bytes, &node->VidMem.kvaddr));
-                else
-                    gcmkONERROR(gckOS_CreateKernelMapping(os, node->VidMem.parent->physical,
-                                                              node->VidMem.offset,
-                                                              node->VidMem.bytes,
-                                                              &node->VidMem.kvaddr));
+                gcmkONERROR(gckOS_Allocate(os, node->VidMem.bytes, &node->VidMem.kvaddr));
 #else
                 gcmkONERROR(gckOS_CreateKernelMapping(os, node->VidMem.parent->physical,
                                                       node->VidMem.offset,
@@ -3864,9 +3808,6 @@ gckVIDMEM_NODE_UnlockCPU(IN gckKERNEL Kernel,
     gctBOOL            acquired = gcvFALSE;
     gcuVIDMEM_NODE_PTR node;
     gckVIDMEM_BLOCK    vidMemBlock;
-#if gcdCAPTURE_ONLY_MODE
-    gcsDATABASE_PTR database = gcvNULL;
-#endif
 
     gcmkHEADER_ARG("NodeObject=%p", NodeObject);
 
@@ -3889,22 +3830,8 @@ gckVIDMEM_NODE_UnlockCPU(IN gckKERNEL Kernel,
 
     if (node->VidMem.parent->object.type == gcvOBJ_VIDMEM) {
         if (FromUser) {
-#if defined __QNXNTO__
+#if gcdCAPTURE_ONLY_MODE || defined __QNXNTO__
             /* Do nothing here. */
-#else
-#if gcdCAPTURE_ONLY_MODE
-            gcmkONERROR(gckKERNEL_FindDatabase(Kernel, ProcessID, gcvFALSE, &database));
-
-            if (database && !database->matchCaptureOnly) {
-                if (!Defer) {
-                    /* Unmap the video memory. */
-                    gckKERNEL_UnmapVideoMemory(Kernel, node->VidMem.pool,
-                                               node->VidMem.physical,
-                                               node->VidMem.logical,
-                                               0,
-                                               node->VidMem.bytes);
-                }
-            }
 #else
             if (!Defer) {
                 /* Unmap the video memory. */
@@ -3918,7 +3845,6 @@ gckVIDMEM_NODE_UnlockCPU(IN gckKERNEL Kernel,
                     node->VidMem.logical = gcvNULL;
                 }
             }
-#endif
 #endif
         } else {
             /*

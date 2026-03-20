@@ -52,7 +52,6 @@
 *
 *****************************************************************************/
 
-
 #include "gc_hal_kernel_precomp.h"
 
 #define _GC_OBJ_ZONE gcvZONE_MMU
@@ -760,8 +759,10 @@ gckMMU_FillFlatMappingWithPage16M(IN gckMMU Mmu, IN gctUINT64 PhysBase, IN gctSI
             stlbLogical = (gctUINT32_PTR)((gctUINT8_PTR)curStlbChunk->logical +
                                           (stlbOffset * gcdMMU_STLB_16M_SIZE));
 
-            if (stlbPhyBase != (mtlbEntry & gcdMMU_MTLB_ENTRY_STLB_MASK))
+            if (stlbPhyBase != (mtlbEntry & gcdMMU_MTLB_ENTRY_STLB_MASK)) {
+                /* Check the mtlb's contents. */
                 gcmkASSERT(0);
+            }
         }
 
 #if gcdDUMP_IN_KERNEL
@@ -1158,8 +1159,10 @@ gckMMU_FillFlatMappingWithPage1M(IN gckMMU Mmu, IN gctUINT64 PhysBase, IN gctSIZ
             stlbLogical = (gctUINT32_PTR)((gctUINT8_PTR)curStlbChunk->logical +
                                           (stlbOffset * gcdMMU_STLB_1M_SIZE));
 
-            if (stlbPhyBase != (mtlbEntry & gcdMMU_MTLB_ENTRY_STLB_MASK))
+            if (stlbPhyBase != (mtlbEntry & gcdMMU_MTLB_ENTRY_STLB_MASK)) {
+                /* Check the mtlb's contents. */
                 gcmkASSERT(0);
+            }
         }
 
 #if gcdDUMP_IN_KERNEL
@@ -1466,8 +1469,10 @@ gckMMU_FillFlatMappingWithPage64K(IN gckMMU Mmu, IN gctUINT64 PhysBase, IN gctSI
             stlbLogical = (gctUINT32_PTR)((gctUINT8_PTR)curStlbChunk->logical +
                                           (stlbOffset * gcdMMU_STLB_64K_SIZE));
 
-            if (stlbPhyBase != (mtlbEntry & gcdMMU_MTLB_ENTRY_STLB_MASK))
+            if (stlbPhyBase != (mtlbEntry & gcdMMU_MTLB_ENTRY_STLB_MASK)) {
+                /* Check the mtlb's contents. */
                 gcmkASSERT(0);
+            }
         }
 
 #if gcdDUMP_IN_KERNEL
@@ -1776,8 +1781,10 @@ gckMMU_FillFlatMappingWithPage4K(IN gckMMU Mmu, IN gctUINT64 PhysBase, IN gctSIZ
             stlbLogical = (gctUINT32_PTR)((gctUINT8_PTR)curStlbChunk->logical +
                                           (stlbOffset * gcdMMU_STLB_4K_SIZE));
 
-            if (stlbPhyBase != (mtlbEntry & gcdMMU_MTLB_ENTRY_STLB_MASK))
+            if (stlbPhyBase != (mtlbEntry & gcdMMU_MTLB_ENTRY_STLB_MASK)) {
+                /* Check the mtlb's contents. */
                 gcmkASSERT(0);
+            }
         }
 
 #if gcdDUMP_IN_KERNEL
@@ -2497,7 +2504,7 @@ _Construct(IN gckKERNEL Kernel, IN gctSIZE_T MmuSize, OUT gckMMU *Mmu)
                 gcmkONERROR(gckMMU_FillFlatMapping(mmu, gpuAddress, physSize, gcvFALSE, gcvFALSE, gcvNULL));
         }
 
-#if !(0)
+#if !(0 || gcdCAPTURE_ONLY_MODE)
         if (!_ReadPageEntry(mmu->mtlbLogical + 0)) {
 #if !gcdENABLE_40BIT_VA
             gctUINT32 mtlbEntry;

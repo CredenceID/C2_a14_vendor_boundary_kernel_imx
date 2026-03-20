@@ -52,7 +52,6 @@
 *
 *****************************************************************************/
 
-
 /*
  *   dts node example:
  *   gpu_3d: gpu@53100000 {
@@ -234,7 +233,7 @@ gceSTATUS
 _set_power(IN gcsPLATFORM *Platform, IN gctUINT32 DevIndex, IN gceCORE GPU, IN gctBOOL Enable)
 {
     int num_domains = gpd.num_domains;
-
+    
     if (num_domains > 1) {
         int sub_index = gpd.local_core_index[GPU];
         struct device *sub_dev = gpd.power_dev[sub_index];

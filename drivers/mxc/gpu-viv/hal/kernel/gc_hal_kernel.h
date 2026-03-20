@@ -52,7 +52,6 @@
 *
 *****************************************************************************/
 
-
 #ifndef __gc_hal_kernel_h_
 #define __gc_hal_kernel_h_
 
@@ -209,9 +208,6 @@ typedef struct _gcsDATABASE {
 
     gctPOINTER                          handleDatabase;
     gctPOINTER                          handleDatabaseMutex;
-#if gcdCAPTURE_ONLY_MODE
-    gctBOOL                             matchCaptureOnly;
-#endif
 } gcsDATABASE;
 
 typedef struct _gcsFDPRIVATE *gcsFDPRIVATE_PTR;
@@ -278,6 +274,10 @@ gckKERNEL_DumpProcessDB(IN gckKERNEL Kernel);
 /* Dump the video memory usage for process specified. */
 gceSTATUS
 gckKERNEL_DumpVidMemUsage(IN gckKERNEL Kernel, IN gctINT32 ProcessID);
+
+/* Dump GPU state. */
+void
+gckKERNEL_DumpState(gckKERNEL Kernel);
 
 gceSTATUS
 gckKERNEL_FindDatabase(IN gckKERNEL        Kernel,
@@ -700,6 +700,8 @@ struct _gckCOMMAND {
     gckFENCE                    fence;
 
     gctBOOL                     dummyDraw;
+
+    gctUINT32                   currPid;
 };
 
 typedef struct _gcsEVENT       *gcsEVENT_PTR;
@@ -1674,6 +1676,10 @@ gckKERNEL_AllocateVideoMemory(IN gckKERNEL       Kernel,
                               IN OUT gcePOOL     *Pool,
                               OUT gckVIDMEM_NODE *NodeObject);
 
+/* Config power management form dispatch */
+gceSTATUS
+gckKERNEL_ConfigPowerManagement(gckKERNEL Kernel, gcsHAL_INTERFACE *Interface);
+
 gceSTATUS
 gckHARDWARE_QchannelPowerControl(IN gckHARDWARE Hardware,
                                  IN gctBOOL     ClockState,
@@ -1699,6 +1705,9 @@ gceSTATUS
 gckHARDWARE_QueryMcfe(IN gckHARDWARE                 Hardware,
                       OUT const gceMCFE_CHANNEL_TYPE *Channels[],
                       OUT gctUINT32                  *Count);
+
+gceSTATUS
+gckHARDWARE_QchannelFlushCache(gckHARDWARE Hardware);
 
 #if gcdSECURITY
 gceSTATUS
@@ -1761,17 +1770,10 @@ gceSTATUS
 gckKERNEL_SecurityCallService(IN gctUINT32           Channel,
                               IN OUT gcsTA_INTERFACE *Interface);
 
-/* Config power management form dispatch */
-gceSTATUS
-gckKERNEL_ConfigPowerManagement(gckKERNEL Kernel, gcsHAL_INTERFACE *Interface);
-
 gceSTATUS
 gckKERNEL_SecurityStartCommand(IN gckKERNEL  Kernel,
                                IN gctADDRESS Address,
                                IN gctUINT32  Bytes);
-
-gceSTATUS
-gckHARDWARE_QchannelFlushCache(gckHARDWARE Hardware);
 
 gceSTATUS
 gckKERNEL_SecurityMapMemory(IN gckKERNEL      Kernel,
@@ -2015,12 +2017,12 @@ gckCOMMAND_DumpExecutingBuffer(IN gckCOMMAND Command);
 gceSTATUS
 gckCOMMAND_Detach(IN gckCOMMAND Command, IN gckCONTEXT Context);
 
-void
-gcsLIST_Init(gcsLISTHEAD_PTR Node);
-
 /* Switch to security first, then switch to non-security mode. */
 gceSTATUS
 gckCOMMAND_SwitchSecurityMode(gckCOMMAND Command, gckHARDWARE Hardware);
+
+void
+gcsLIST_Init(gcsLISTHEAD_PTR Node);
 
 void
 gcsLIST_Add(gcsLISTHEAD_PTR New, gcsLISTHEAD_PTR Head);
@@ -2135,9 +2137,6 @@ gckOS_AllocatePageArray(IN gckOS         Os,
                         OUT gctPOINTER   *PageArrayLogical,
                         OUT gctPHYS_ADDR *PageArrayPhysical);
 #endif
-
-void
-gckKERNEL_DumpState(gckKERNEL Kernel);
 
 #ifdef __cplusplus
 }

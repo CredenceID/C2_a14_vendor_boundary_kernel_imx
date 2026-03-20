@@ -52,7 +52,6 @@
 *
 *****************************************************************************/
 
-
 #include "gc_hal.h"
 #include "gc_hal_kernel.h"
 #include "gc_hal_kernel_hardware_command_vg.h"
@@ -236,7 +235,7 @@ _IdentifyHardware(IN gckOS         Os,
 }
 
 #if gcdPOWEROFF_TIMEOUT
-void
+static void
 _VGPowerTimerFunction(gctPOINTER Data)
 {
     gckVGHARDWARE hardware = (gckVGHARDWARE)Data;
