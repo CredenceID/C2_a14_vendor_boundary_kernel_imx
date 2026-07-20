@@ -152,6 +152,7 @@ struct panel_common {
 	unsigned i2c_address;
 	struct interface_cmds cmds_init;
 	struct interface_cmds cmds_enable;
+	struct cmds cmds_enable_v1;	/* old panel (Sitronix ST7703I) alternate init */
 	struct interface_cmds cmds_enable2;
 	struct interface_cmds cmds_disable;
 	struct panel_sn65dsi83 sn65;
@@ -791,6 +792,37 @@ static int panel_common_enable(struct drm_panel *panel)
 
 	dsi = container_of(p->base.dev, struct mipi_dsi_device, dev);
 	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+
+	/*
+	 * Panel variant detection via MIPI DCS Read ID1 (0xDA).
+	 *
+	 * Both panels currently return 0x38 from the factory (pre-OTP).
+	 * PANEL_ID1_NEW will be the value Forcelead (new panel vendor) programs
+	 * via OTP before shipment. Until then, 0x39 is used as a test placeholder
+	 * to verify the switching logic works end-to-end.
+	 *
+	 * Old panel: Sitronix ST7703I  → DA=0x38 → mipi-cmds-enable-v1
+	 * New panel: Forcelead ST7703  → DA=PANEL_ID1_NEW → mipi-cmds-enable (default)
+	 */
+#define PANEL_ID1_NEW  0x00  /* placeholder — vendor to OTP-program before shipment */
+#define PANEL_ID1_OLD  0x38  /* Sitronix ST7703I */
+	{
+		u8 id1 = 0xff;
+		ssize_t r = mipi_dsi_dcs_read(dsi, 0xDA, &id1, 1);
+
+		dev_info(p->base.dev, "PANEL_ID: DA=%02x (r=%zd)\n", id1, r);
+		if (id1 == PANEL_ID1_OLD && p->cmds_enable_v1.cmds) {
+			dev_info(p->base.dev, "PANEL_ID: Sitronix ST7703I detected, using v1 init\n");
+			p->cmds_enable.mipi = p->cmds_enable_v1;
+		} else if (id1 == PANEL_ID1_NEW) {
+			dev_info(p->base.dev, "PANEL_ID: Forcelead ST7703 detected, using v2 init\n");
+		} else {
+			dev_info(p->base.dev, "PANEL_ID: unknown DA=0x%02x, defaulting to v1 (Sitronix)\n", id1);
+			if (p->cmds_enable_v1.cmds)
+				p->cmds_enable.mipi = p->cmds_enable_v1;
+		}
+	}
+
 	ret = send_all_cmd_lists(p, &p->cmds_enable);
 	if (ret < 0)
 		goto fail;
@@ -1122,6 +1154,8 @@ static int panel_common_probe(struct device *dev, const struct panel_desc *desc,
 				       &panel->cmds_init.mipi);
 			check_for_cmds(cmds_np, "mipi-cmds-enable",
 				       &panel->cmds_enable.mipi);
+			check_for_cmds(cmds_np, "mipi-cmds-enable-v1",
+				       &panel->cmds_enable_v1);
 			/* enable 2 is after frame data transfer has started */
 			check_for_cmds(cmds_np, "mipi-cmds-enable2",
 				       &panel->cmds_enable2.mipi);
